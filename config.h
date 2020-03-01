@@ -192,6 +192,20 @@ ResourcePref resources[] = {
 		{ "chscale",      FLOAT,   &chscale },
 };
 
+static char *openurlcmd[] = {
+    "/bin/sh", "-c",
+    "sed 's/.*│//g' | tr -d '\n' | xurls | uniq | sed "
+    "'s/^www./http:\\/\\/www\\./g' | dmenu -i -p 'Follow which url?' -l 10 | "
+    "xargs -r xdg-open",
+    "externalpipe", NULL};
+
+static char *copyurlcmd[] = {
+    "/bin/sh", "-c",
+    "sed 's/.*│//g' | tr -d '\n' | xurls | uniq | sed "
+    "'s/^www./http:\\/\\/www\\./g' | dmenu -i -p 'Copy which url?' -l 10 | tr "
+    "-d '\n' | xclip -selection clipboard",
+    "externalpipe", NULL};
+
 /*
  * Internal mouse shortcuts.
  * Beware that overloading Button1 will disable the selection.
@@ -224,13 +238,23 @@ static Shortcut shortcuts[] = {
 	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
 	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
 	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
-	{ MODKEY,               XK_u,           kscrollup,      {.i = -1} },
-	{ MODKEY,               XK_d,           kscrolldown,    {.i = -1} },
-	{ MODKEY,               XK_k,           kscrollup,      {.i =  1} },
-	{ MODKEY,               XK_j,           kscrolldown,    {.i =  1} },
-	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
+	{ MODKEY,               XK_U,           kscrollup,      {.i = -1} },
+	{ MODKEY,               XK_D,           kscrolldown,    {.i = -1} },
+	{ MODKEY,               XK_K,           kscrollup,      {.i =  1} },
+	{ MODKEY,               XK_J,           kscrolldown,    {.i =  1} },
+	{ ShiftMask,            XK_Insert,      clippaste,      {.i =  0} },
 	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
 	{ TERMMOD,              XK_Escape,      keyboard_select, { 0 } },
+
+    {MODKEY | ShiftMask,    XK_Up,      zoom, {.f = +1}},
+    {MODKEY | ShiftMask,    XK_Down,    zoom, {.f = -1}},
+    {MODKEY | ShiftMask,    XK_K,       zoom, {.f = +1}},
+    {MODKEY | ShiftMask,    XK_J,       zoom, {.f = -1}},
+    {MODKEY | ShiftMask,    XK_U,       zoom, {.f = +2}},
+    {MODKEY | ShiftMask,    XK_D,       zoom, {.f = -2}},
+
+    {MODKEY, XK_O, externalpipe, {.v = openurlcmd}},
+    {MODKEY, XK_Y, externalpipe, {.v = copyurlcmd}},
 };
 
 /*
