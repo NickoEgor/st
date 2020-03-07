@@ -4,7 +4,7 @@
 
 pkgname=st-yahor-git
 _pkgname=st
-pkgver=0.8.2.r1066.f22cb5b
+pkgver=0.8.2.r1069.d109688
 pkgrel=1
 epoch=1
 pkgdesc="Yahor's st - suckless terminal"
@@ -43,5 +43,4 @@ package() {
 	make PREFIX=/usr DESTDIR="${pkgdir}" install
 	install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 	install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
-	install -Dm644 .Xdefaults "${pkgdir}/usr/share/doc/${pkgname}/Xdefaults.example"
 }
