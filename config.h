@@ -5,7 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "mono:pixelsize=16:antialias=true:autohint=true";
+static char *font = "mono:pixelsize=18:antialias=true:autohint=true";
 static int borderpx = 2;
 
 /*
@@ -84,7 +84,7 @@ unsigned int tabspaces = 8;
 
 /* bg opacity */
 float alpha = 0.8;           //< alpha value used when the window is focused.
-float alphaUnfocussed = 0.65; //< alpha value used when the focus is lost
+float alphaUnfocused = 0.65; //< alpha value used when the focus is lost
 
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
@@ -190,6 +190,9 @@ ResourcePref resources[] = {
 		{ "borderpx",     INTEGER, &borderpx },
 		{ "cwscale",      FLOAT,   &cwscale },
 		{ "chscale",      FLOAT,   &chscale },
+
+		{ "alpha",        FLOAT,   &alpha },
+		{ "alphaUnfocused", FLOAT, &alphaUnfocused },
 };
 
 static char *openurlcmd[] = {
