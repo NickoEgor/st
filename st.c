@@ -39,6 +39,7 @@
 #define ESC_ARG_SIZ   16
 #define STR_BUF_SIZ   ESC_BUF_SIZ
 #define STR_ARG_SIZ   ESC_ARG_SIZ
+#define HISTSIZE      2000
 
 /* macros */
 #define IS_SET(flag)		((term.mode & (flag)) != 0)
@@ -47,6 +48,9 @@
 #define ISCONTROL(c)		(ISCONTROLC0(c) || ISCONTROLC1(c))
 #define ISDELIM(u)		(u && wcschr(worddelimiters, u))
 #define INTERVAL(x, a, b)	(x) < (a) ? (a) : (x) > (b) ? (b) : (x)
+#define TLINE(y)		((y) < term.scr ? term.hist[((y) + term.histi - \
+				term.scr + HISTSIZE + 1) % HISTSIZE] : \
+				term.line[(y) - term.scr])
 
 enum term_mode {
 	MODE_WRAP        = 1 << 0,
@@ -90,6 +94,56 @@ enum escape_state {
 	ESC_UTF8       = 64,
 	ESC_DCS        =128,
 };
+
+// // START
+// typedef struct {
+// 	Glyph attr; /* current char attributes */
+// 	int x;
+// 	int y;
+// 	char state;
+// } TCursor;
+// 
+// typedef struct {
+// 	int mode;
+// 	int type;
+// 	int snap;
+// 	/*
+// 	 * Selection variables:
+// 	 * nb – normalized coordinates of the beginning of the selection
+// 	 * ne – normalized coordinates of the end of the selection
+// 	 * ob – original coordinates of the beginning of the selection
+// 	 * oe – original coordinates of the end of the selection
+// 	 */
+// 	struct {
+// 		int x, y;
+// 	} nb, ne, ob, oe;
+// 
+// 	int alt;
+// } Selection;
+// 
+// /* Internal representation of the screen */
+// typedef struct {
+// 	int row;      /* nb row */
+// 	int col;      /* nb col */
+// 	Line *line;   /* screen */
+// 	Line *alt;    /* alternate screen */
+// 	Line hist[HISTSIZE]; /* history buffer */
+// 	int histi;    /* history index */
+// 	int scr;      /* scroll back */
+// 	int *dirty;   /* dirtyness of lines */
+// 	TCursor c;    /* cursor */
+// 	int ocx;      /* old cursor col */
+// 	int ocy;      /* old cursor row */
+// 	int top;      /* top    scroll limit */
+// 	int bot;      /* bottom scroll limit */
+// 	int mode;     /* terminal mode flags */
+// 	int esc;      /* escape state flags */
+// 	char trantbl[4]; /* charset table translation */
+// 	int charset;  /* current charset */
+// 	int icharset; /* selected charset for sequence */
+// 	int *tabs;
+// } Term;
+// // END
 
 /* CSI Escape sequence structs */
 /* ESC '[' [[ [<priv>] <arg> [;]] <mode> [<mode>]] */
@@ -596,6 +650,8 @@ getsel(void)
 		} else {
 			gp = &TLINE(y)[syb == y ? sel.nb.x : 0];
 			lastx = (sye == y) ? sel.ne.x : term.col-1;
+			/* gp = &TLINE(y)[sel.nb.y == y ? sel.nb.x : 0]; */
+			/* lastx = (sel.ne.y == y) ? sel.ne.x : term.col-1; */
 		}
 		last = &TLINE(y)[MIN(lastx, linelen-1)];
 		while (last >= gp && last->u == ' ')
@@ -1034,6 +1090,11 @@ tnew(int col, int row)
 	treset();
 }
 
+int tisaltscr(void)
+{
+	return IS_SET(MODE_ALTSCREEN);
+}
+
 void
 tswapscreen(void)
 {
@@ -1102,7 +1163,8 @@ tscrolldown(int orig, int n, int copyhist)
 		term.line[i-n] = temp;
 	}
 
-	selscroll(orig, n);
+	if (term.scr == 0)
+		selscroll(orig, n);
 }
 
 void
@@ -1132,7 +1194,8 @@ tscrollup(int orig, int n, int copyhist)
 		term.line[i+n] = temp;
 	}
 
-	selscroll(orig, -n);
+	if (term.scr == 0)
+		selscroll(orig, -n);
 }
 
 void
@@ -1978,6 +2041,59 @@ strparse(void)
 }
 
 void
+externalpipe(const Arg *arg)
+{
+	int to[2];
+	char buf[UTF_SIZ];
+	void (*oldsigpipe)(int);
+	Glyph *bp, *end;
+	int lastpos, n, newline;
+
+	if (pipe(to) == -1)
+		return;
+
+	switch (fork()) {
+	case -1:
+		close(to[0]);
+		close(to[1]);
+		return;
+	case 0:
+		dup2(to[0], STDIN_FILENO);
+		close(to[0]);
+		close(to[1]);
+		execvp(((char **)arg->v)[0], (char **)arg->v);
+		fprintf(stderr, "st: execvp %s\n", ((char **)arg->v)[0]);
+		perror("failed");
+		exit(0);
+	}
+
+	close(to[0]);
+	/* ignore sigpipe for now, in case child exists early */
+	oldsigpipe = signal(SIGPIPE, SIG_IGN);
+	newline = 0;
+	for (n = 0; n < term.row; n++) {
+		bp = term.line[n];
+		lastpos = MIN(tlinelen(n) + 1, term.col) - 1;
+		if (lastpos < 0)
+			break;
+		end = &bp[lastpos + 1];
+		for (; bp < end; ++bp)
+			if (xwrite(to[1], buf, utf8encode(bp->u, buf)) < 0)
+				break;
+		if ((newline = term.line[n][lastpos].mode & ATTR_WRAP))
+			continue;
+		if (xwrite(to[1], "\n", 1) < 0)
+			break;
+		newline = 0;
+	}
+	if (newline)
+		(void)xwrite(to[1], "\n", 1);
+	close(to[1]);
+	/* restore */
+	signal(SIGPIPE, oldsigpipe);
+}
+
+void
 strdump(void)
 {
 	size_t i;
@@ -2651,8 +2767,9 @@ draw(void)
 		cx--;
 
 	drawregion(0, 0, term.col, term.row);
-	xdrawcursor(cx, term.c.y, TLINE(term.c.y)[cx],
-			term.ocx, term.ocy, TLINE(term.ocy)[term.ocx]);
+	if (term.scr == 0)
+        xdrawcursor(cx, term.c.y, TLINE(term.c.y)[cx],
+                term.ocx, term.ocy, TLINE(term.ocy)[term.ocx]);
 	term.ocx = cx;
 	term.ocy = term.c.y;
 	xfinishdraw();

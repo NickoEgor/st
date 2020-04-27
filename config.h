@@ -5,7 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
+static char *font = "monospace:pixelsize=18:antialias=true:autohint=true";
 static int borderpx = 2;
 
 /*
@@ -123,9 +123,9 @@ static const char *colorname[] = {
  * foreground, background, cursor, reverse cursor
  */
 unsigned int defaultfg = 7;
-unsigned int defaultbg = 258;
-static unsigned int defaultcs = 256;
-static unsigned int defaultrcs = 257;
+unsigned int defaultbg = 0;
+static unsigned int defaultcs = 14;
+static unsigned int defaultrcs = 15;
 
 /*
  * Default shape of cursor
@@ -201,12 +201,27 @@ static unsigned int highlightFg = 15;
 static unsigned int currentBg = 8;
 static unsigned int currentFg = 15;
 
+
 /*
  * Force mouse select/shortcuts while mask is active (when MODE_MOUSE is set).
  * Note that if you want to use ShiftMask with selmasks, set this to an other
  * modifier, set to 0 to not use it.
  */
 static uint forcemousemod = ShiftMask;
+
+static char *openurlcmd[] = {
+    "/bin/sh", "-c",
+    "sed 's/.*│//g' | tr -d '\n' | xurls | uniq | sed "
+    "'s/^www./http:\\/\\/www\\./g' | dmenu -i -p 'Follow which url?' -l 10 | "
+    "xargs -r xdg-open",
+    "externalpipe", NULL};
+
+static char *copyurlcmd[] = {
+    "/bin/sh", "-c",
+    "sed 's/.*│//g' | tr -d '\n' | xurls | uniq | sed "
+    "'s/^www./http:\\/\\/www\\./g' | dmenu -i -p 'Copy which url?' -l 10 | tr "
+    "-d '\n' | xclip -selection clipboard",
+    "externalpipe", NULL};
 
 /*
  * Internal mouse shortcuts.
@@ -228,21 +243,50 @@ static MouseShortcut mshortcuts[] = {
 
 static Shortcut shortcuts[] = {
 	/* mask                 keysym          function        argument */
-	{ AltMask,              XK_c,           normalMode,     {.i =  0} },
 	{ XK_ANY_MOD,           XK_Break,       sendbreak,      {.i =  0} },
 	{ ControlMask,          XK_Print,       toggleprinter,  {.i =  0} },
 	{ ShiftMask,            XK_Print,       printscreen,    {.i =  0} },
 	{ XK_ANY_MOD,           XK_Print,       printsel,       {.i =  0} },
 	{ TERMMOD,              XK_Prior,       zoom,           {.f = +1} },
 	{ TERMMOD,              XK_Next,        zoom,           {.f = -1} },
+	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
+	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
 	{ TERMMOD,              XK_Home,        zoomreset,      {.f =  0} },
+
+    // clipboard/primary
 	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
 	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
-	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
-	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
-	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
-	{ ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
-	{ ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
+	{ TERMMOD,              XK_P,           selpaste,       {.i =  0} },
+
+    // scroll line
+	{ MODKEY,               XK_k,           kscrollup,      {.i =  1} },
+	{ MODKEY,               XK_j,           kscrolldown,    {.i =  1} },
+	{ MODKEY,               XK_Up,          kscrollup,      {.i =  1} },
+	{ MODKEY,               XK_Down,        kscrolldown,    {.i =  1} },
+
+    // scroll half-page
+	{ MODKEY,               XK_u,           kscrollup,      {.i = -1} },
+	{ MODKEY,               XK_d,           kscrolldown,    {.i = -1} },
+	{ MODKEY,               XK_Page_Up,     kscrollup,      {.i = -1} },
+	{ MODKEY,               XK_Page_Down,   kscrolldown,    {.i = -1} },
+
+    // zoom
+    { MODKEY | ShiftMask,   XK_K,           zoom,           {.f = +1} },
+    { MODKEY | ShiftMask,   XK_J,           zoom,           {.f = -1} },
+    { MODKEY | ShiftMask,   XK_Up,          zoom,           {.f = +1} },
+    { MODKEY | ShiftMask,   XK_Down,        zoom,           {.f = -1} },
+    { MODKEY | ShiftMask,   XK_U,           zoom,           {.f = +2} },
+    { MODKEY | ShiftMask,   XK_D,           zoom,           {.f = -2} },
+    { MODKEY | ShiftMask,   XK_Page_Up,     zoom,           {.f = +2} },
+    { MODKEY | ShiftMask,   XK_Page_Down,   zoom,           {.f = -2} },
+	{ TERMMOD,              XK_Home,        zoomreset,      {.f =  0} },
+
+    // external
+    { MODKEY,               XK_o,           externalpipe,   {.v = openurlcmd}},
+    { MODKEY,               XK_y,           externalpipe,   {.v = copyurlcmd}},
+
+    // vimbrowse
+    { AltMask,              XK_c,           normalMode,     {.i =  0} },
 };
 
 /*
@@ -515,7 +559,6 @@ static char ascii_printable[] =
 	"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 	"`abcdefghijklmnopqrstuvwxyz{|}~";
 
-
 /// word sepearors normal mode
 /// [Vim Browse].
 char wordDelimSmall[] = " \t!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
@@ -524,14 +567,14 @@ char wordDelimLarge[] = " \t"; /// <Word sepearors normal mode (capital W)
 /// Shortcusts executed in normal mode (which should not already be in use)
 /// [Vim Browse].
 struct NormalModeShortcuts normalModeShortcuts [] = {
-	{ 'R', "?Building\n" },
-	{ 'r', "/Building\n" },
-	{ 'F', "?: error:\n" },
-	{ 'f', "/: error:\n" },
-	{ 'Q', "?[Leaving vim, starting execution]\n" },
-	{ 'S', "Qf" },
-	{ 'X', "?juli@machine\n" },
-	{ 'x', "/juli@machine\n" },
+       { 'R', "?Building\n" },
+       { 'r', "/Building\n" },
+       { 'F', "?: error:\n" },
+       { 'f', "/: error:\n" },
+       { 'Q', "?[Leaving vim, starting execution]\n" },
+       { 'S', "Qf" },
+       { 'X', "?juli@machine\n" },
+       { 'x', "/juli@machine\n" },
 };
 
 size_t const amountNormalModeShortcuts = sizeof(normalModeShortcuts) / sizeof(*normalModeShortcuts);
@@ -555,4 +598,3 @@ unsigned int fgCommandVisualLine = 232;
 
 unsigned int bgPos = 15;
 unsigned int fgPos = 16;
-
