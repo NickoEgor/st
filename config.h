@@ -286,7 +286,7 @@ static Shortcut shortcuts[] = {
     { MODKEY,               XK_y,           externalpipe,   {.v = copyurlcmd}},
 
     // vimbrowse
-    { AltMask,              XK_c,           normalMode,     {.i =  0} },
+    { TERMMOD,              XK_S,           normalMode,     {.i =  0} },
 };
 
 /*
