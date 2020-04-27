@@ -3,7 +3,7 @@
 The [suckless terminal (st)](https://st.suckless.org/) with patches
 
 ## Patches
-#
+
 + [alpha](https://st.suckless.org/patches/alpha/): transparency patch
 + [bold-is-not-bright](https://st.suckless.org/patches/bold-is-not-bright/): disables "bright bold colors" behaviour in st
 + [externalpipe](https://st.suckless.org/patches/externalpipe/): read and write st's screen through a pipe
