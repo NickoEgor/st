@@ -5,7 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "monospace:pixelsize=18:antialias=true:autohint=true";
+static char *font = "monospace:pixelsize=14:antialias=true:autohint=true";
 static int borderpx = 2;
 
 /*
@@ -286,7 +286,7 @@ static Shortcut shortcuts[] = {
     { MODKEY,               XK_y,           externalpipe,   {.v = copyurlcmd}},
 
     // vimbrowse
-    { AltMask,              XK_c,           normalMode,     {.i =  0} },
+    { TERMMOD,              XK_S,           normalMode,     {.i =  0} },
 };
 
 /*
