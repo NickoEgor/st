@@ -7,3 +7,6 @@
 5. xresources [https://st.suckless.org/patches/xresources/]
 6. csi 22 23 [https://st.suckless.org/patches/csi_22_23/]
 7. font2 [https://st.suckless.org/patches/font2/]
+8. vimBrowse
+9. anysize [https://st.suckless.org/patches/anysize/]
+10. Luke Smith's columns patch
