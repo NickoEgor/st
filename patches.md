@@ -8,3 +8,6 @@
 6. csi 22 23 [https://st.suckless.org/patches/csi_22_23/]
 7. sync (2nd) [https://st.suckless.org/patches/sync/]
 8. font2 [https://st.suckless.org/patches/font2/]
+9. vimBrowse
+10. anysize [https://st.suckless.org/patches/anysize/]
+11. Luke Smith's columns patch
