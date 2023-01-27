@@ -7,3 +7,4 @@
 5. xresources [https://st.suckless.org/patches/xresources/]
 6. csi 22 23 [https://st.suckless.org/patches/csi_22_23/]
 7. sync (2nd) [https://st.suckless.org/patches/sync/]
+8. font2 [https://st.suckless.org/patches/font2/]
