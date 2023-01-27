@@ -6,3 +6,4 @@
 4. externalpipe [https://st.suckless.org/patches/externalpipe/]
 5. xresources [https://st.suckless.org/patches/xresources/]
 6. csi 22 23 [https://st.suckless.org/patches/csi_22_23/]
+7. font2 [https://st.suckless.org/patches/font2/]
