@@ -11,3 +11,4 @@
 9. vimBrowse
 10. anysize [https://st.suckless.org/patches/anysize/]
 11. Luke Smith's columns patch
+12. ligatures [https://st.suckless.org/patches/ligatures/]
