@@ -11,3 +11,4 @@
 9. anysize [https://st.suckless.org/patches/anysize/]
 10. Luke Smith's columns patch
 11. glyph wide support (2nd version) [https://st.suckless.org/patches/glyph_wide_support/]
+12. sync [https://st.suckless.org/patches/sync/]
